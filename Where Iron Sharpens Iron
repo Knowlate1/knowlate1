@@ -1,0 +1,49 @@
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+data = {}
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    name = request.form['name']
+    thoughts = request.form['thoughts']
+
+    if name not in data:
+        data[name] = []
+
+    data[name].append(thoughts)
+
+    return "Thank you for submitting your thoughts."
+
+@app.route('/analysis')
+def analysis():
+    unique_scores = {}
+    for name, thoughts in data.items():
+        unique_score = calculate_unique_score(thoughts)
+        unique_scores[name] = unique_score
+
+    sorted_scores = sorted(unique_scores.items(), key=lambda x: x[1], reverse=True)
+
+    return render_template('analysis.html', sorted_scores=sorted_scores)
+
+def calculate_unique_score(thoughts):
+    unique_words = set()
+    total_words = 0
+
+    for thought in thoughts:
+        words = thought.split()
+        unique_words.update(words)
+        total_words += len(words)
+
+    unique_word_count = len(unique_words)
+    total_word_count = total_words
+
+    return round(unique_word_count / total_word_count, 2)
+
+if __name__ == '__main__':
+    app.run(debug=True)
